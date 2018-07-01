@@ -1,108 +1,149 @@
+/*jslint browser:true, this:true*/
     (function($) {
+        "use strict";
+        function inc_trait() {
+            var height_str = $("textarea").css("line-height").slice(0, -2);
+            var height = parseInt(height_str) + 1;
+            $("textarea").css("line-height", height + "px");
+        }
+
+        function dec_trait() {
+            var height_str = $("textarea").css("line-height").slice(0, -2);
+            var height = parseInt(height_str) - 1;
+            $("textarea").css("line-height", height + "px");
+        }
 
         function line_through() {
-            if (typeof line_through.counter === "undefined") {
+            if (line_through.counter !== 0 && line_through.counter !== 1) {
                 line_through.counter = 0;
             }
-            if (line_through.counter % 2 === 0 || clicked_deco % 2 === 1) {
+            if (line_through.counter % 2 === 0) {
                 $("textarea").css("text-decoration", "line-through");
             } else if (line_through.counter % 2 === 1) {
-                $("textarea").css("text-decoration", "none");
+                $("textarea").css("text-decoration", "");
             }
             line_through.counter += 1;
         }
 
         function underline() {
-            if (typeof underline.counter === "undefined") {
+            if (underline.counter !== 0 && underline.counter !== 1) {
                 underline.counter = 0;
             }
-            if (underline.counter % 2 === 0 || clicked_deco % 2 === 1) {
+            if (underline.counter % 2 === 0) {
                 $("textarea").css("text-decoration", "underline");
             } else if (underline.counter % 2 === 1) {
-                $("textarea").css("text-decoration", "none");
+                $("textarea").css("text-decoration", "");
             }
             underline.counter += 1;
         }
 
         function bold() {
-            if (typeof bold.counter === "undefined") {
+            if (bold.counter !== 0 && bold.counter !== 1) {
                 bold.counter = 0;
             }
             if (bold.counter % 2 === 0) {
                 $("textarea").css("font-weight", "bold");
             } else if (bold.counter % 2 === 1) {
-                $("textarea").css("font-weight", "normal");
+                $("textarea").css("font-weight", "");
             }
             bold.counter += 1;
         }
 
         function italic() {
-            if (typeof italic.counter === "undefined") {
+            if (italic.counter !== 0 && italic.counter !== 1) {
                 italic.counter = 0;
             }
             if (italic.counter % 2 === 0) {
                 $("textarea").css("font-style", "italic");
             } else if (italic.counter % 2 === 1) {
-                $("textarea").css("font-style", "normal");
+                $("textarea").css("font-style", "");
             }
             italic.counter += 1;
         }
 
-        $.fn.my_wysiwyg = function (options) {
-            var button_ids = new Array; //On crée un tableau qui servira a stocker nos boutons
-            var i = 0; //On initialise le compteur
-            if ($.isPlainObject(options)) { //On vérifie que le paramètre options passé en argument est bien un objet
-                if ($.isArray(options.buttons)) { //On vérifie que l'on a un array nommé buttons a l'intérieur de notre objet options
-                    var buttons_div = document.createElement("div"); //On crée la div pour stocker les boutons
-                    options.buttons.forEach(function(value) { //Pour chacun des éléments (value) du tableau buttons dans l'objet options :
-                        if (value !== "color") {
-                            var button = document.createElement("button"); //On crée un bouton si l'élément est différent de "color"
+        $.fn.my_wysiwyg = function (parameters) {
+            var button_ids = [];
+            var i = 0;
+            if ($.isPlainObject(parameters)) {
+                var options = $.extend({
+                    font_size: "12px",
+                    color: "black",
+                    buttons: null
+                }, parameters);
+                $(document).ready(function () {
+                    $("textarea").css("color", options.color);
+                    $("textarea").css("font-size", options.font_size);
+                });
+                if ($.isArray(options.buttons)) {
+                    var buttons_div = document.createElement("div");
+                    options.buttons.forEach(function(value) {
+                        var button;
+                        var label;
+                        if (value !== "color" && value !== "font_size") {
+                            button = document.createElement("button");
                         }
                         if (value === "color") {
-                            var button = document.createElement("input"); //On crée un input si l'élement est égal à "color"
-                            button.setAttribute("type", "color"); //On donne a l'input le type "color" pour pouvoir choisir la couleur
+                            button = document.createElement("input");
+                            button.setAttribute("type", "color");
                         }
-                        button.id = value; //On donne un élément un id correspondant à son nom (l'élément "color" aura l'id "color" et ainsi de suite)
-                        if (value !== "color") {
-                            button.innerHTML = value; //Si ce n'est pas color le texte du bouton correspondra a son nom
+                        if (value === "font_size") {
+                            button = document.createElement("input");
+                            label = document.createElement("label");
+                            button.setAttribute("type", "text");
+                            label.setAttribute("for", value);
+                            label.innerHTML = "Choose the font-size :";
+                            label.style.fontSize = "12px";
                         }
-                        buttons_div.appendChild(button); //On ajoute le bouton dans la div
-                        //On recommence jusqu'à ce qu'on ait fait tous les éléments du tableau buttons
+                        button.id = value;
+                        if (value !== "color" && value !== "font_size") {
+                            button.innerHTML = value;
+                        }
+                        if (label) {
+                            buttons_div.appendChild(label);
+                        }
+                        buttons_div.appendChild(button);
                     });
-                    document.body.insertBefore(buttons_div, $.this); //On insère la div avant $.this, qui correspond à $("textarea") dans ce contexte
-                    options.buttons.forEach(function(value) { //Une fois que les boutons sont insérés, on les stocke dans le tableau créé plus tôt
+                    document.body.insertBefore(buttons_div, $.this);
+                    options.buttons.forEach(function (value) {
                         button_ids[i] = document.getElementById(value);
                         i += 1;
-                        //Ça permet d'avoir un tableau qui contient les boutons en mode document.children[0] toussa
                     });
-                    button_ids.forEach(function(button) { //Pour chacun des boutons qu'on vient de créer :
-                        button.addEventListener("click", function () { //On ajoute un évènement onclick
+                    button_ids.forEach(function(button) {
+                        button.addEventListener("click", function () {
                             if (button.id === "italic") {
-                                italic(); // On applique la fonction italic() sur le bouton "italic"
+                                italic();
                             } else if (button.id === "bold") {
-                                bold();//la fonction bold() sur le bouton "bold"
+                                bold();
                             } else if (button.id === "line_through") {
-                                line_through(); //etc
+                                line_through();
                             } else if (button.id === "underline") {
                                 underline();
+                            } else if (button.id === "text_right") {
+                                $("textarea").css("text-align", "right");
+                            } else if (button.id === "text_left") {
+                                $("textarea").css("text-align", "left");
+                            } else if (button.id === "text_center") {
+                                $("textarea").css("text-align", "center");
+                            } else if (button.id === "text_justify") {
+                                $("textarea").css("text-align", "justify");
+                            } else if (button.id === "inc_trait") {
+                                inc_trait();
+                            } else if (button.id === "dec_trait") {
+                                dec_trait();
                             }
-                            //si le bouton ne correspond a aucune de nos conditions, il n'aura pas d'évènement onclick
                         });
-                        button.addEventListener("change", function () { // On utilise un évènement onchange pour la couleur
+                        button.addEventListener("change", function () {
                             if (button.id === "color") {
-                                $("textarea").css("color", button.value); //Lorsque la valeur est changée, la couleur du texte prend la valeur de la couleur choisie
+                                $("textarea").css("color", button.value);
+                            }
+                            if (button.id === "font_size") {
+                                $("textarea").css("font-size",
+                                    (button.value + "px"));
                             }
                         });
                     });
                 }
+                return this;
             }
         };
     })(jQuery);
-
-$("textarea").my_wysiwyg(
-  /*l'objet options :*/  { 
-        option1: "valeur1",
-        option2: "valeur2",
-        buttons: ["bold", "italic", "color", "line_through", "underline"] //Le tableau buttons de l'objet options
-    }
-);
